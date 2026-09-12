@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "dgSpecHash": "pMiCXe6kY4Q=",
+  "success": true,
+  "projectFilePath": "/mnt/hd800/Profissional/CapivaradaPasswordReset/CapivaradaPasswordReset.csproj",
+  "expectedPackageFiles": [
+    "/home/alysson-sb/.nuget/packages/microsoft.aspnetcore.openapi/10.0.10/microsoft.aspnetcore.openapi.10.0.10.nupkg.sha512",
+    "/home/alysson-sb/.nuget/packages/microsoft.openapi/2.0.0/microsoft.openapi.2.0.0.nupkg.sha512",
+    "/home/alysson-sb/.nuget/packages/system.text.json/8.0.5/system.text.json.8.0.5.nupkg.sha512",
+    "/home/alysson-sb/.nuget/packages/microsoft.aspnetcore.app.ref/10.0.10/microsoft.aspnetcore.app.ref.10.0.10.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1903",
+      "level": "Warning",
+      "message": "Package 'Microsoft.OpenApi' 2.0.0 has a known high severity vulnerability, https://github.com/advisories/GHSA-v5pm-xwqc-g5wc",
+      "projectPath": "/mnt/hd800/Profissional/CapivaradaPasswordReset/CapivaradaPasswordReset.csproj",
+      "warningLevel": 1,
+      "filePath": "/mnt/hd800/Profissional/CapivaradaPasswordReset/CapivaradaPasswordReset.csproj",
+      "libraryId": "Microsoft.OpenApi",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}
