@@ -3,8 +3,10 @@ using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// HttpClient para comunicação com PlayFab
 builder.Services.AddHttpClient();
 
+// CORS para permitir chamadas vindas do Unity/WebGL
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ResetPassword", policy =>
@@ -20,9 +22,9 @@ var app = builder.Build();
 
 app.UseCors("ResetPassword");
 
-// =====================================================
+// ============================================================
 // STATUS
-// =====================================================
+// ============================================================
 
 app.MapGet("/", () =>
 {
@@ -33,150 +35,181 @@ app.MapGet("/", () =>
     });
 });
 
-// =====================================================
-// CALLBACK DO PLAYFAB
-// =====================================================
+// ============================================================
+// RESET PASSWORD
+// ============================================================
 
-app.MapGet("/api/password/callback", (
-    string? token,
-    IConfiguration configuration) =>
-{
-    if (string.IsNullOrWhiteSpace(token))
+app.MapPost(
+    "/api/password/reset",
+    async (
+        ResetPasswordRequest request,
+        IConfiguration configuration,
+        IHttpClientFactory httpClientFactory) =>
     {
-        return Results.BadRequest(new
+        // ----------------------------------------------------
+        // Validação básica
+        // ----------------------------------------------------
+
+        if (string.IsNullOrWhiteSpace(request.Token))
         {
-            message = "Token de recuperação não informado."
-        });
-    }
+            return Results.BadRequest(new
+            {
+                message =
+                    "Token de recuperação não informado."
+            });
+        }
 
-    string? webGlUrl =
-        configuration["WEBGL_RESET_URL"];
-
-    if (string.IsNullOrWhiteSpace(webGlUrl))
-    {
-        return Results.Problem(
-            "WEBGL_RESET_URL não configurada no servidor."
-        );
-    }
-
-    string redirectUrl =
-        $"{webGlUrl}?resetToken={Uri.EscapeDataString(token)}";
-
-    return Results.Redirect(redirectUrl);
-});
-
-// =====================================================
-// RESET DA SENHA
-// =====================================================
-
-app.MapPost("/api/password/reset", async (
-    ResetPasswordRequest request,
-    IConfiguration configuration,
-    IHttpClientFactory httpClientFactory) =>
-{
-    if (string.IsNullOrWhiteSpace(request.Token))
-    {
-        return Results.BadRequest(new
+        if (string.IsNullOrWhiteSpace(request.Password))
         {
-            message = "Token de recuperação não informado."
-        });
-    }
+            return Results.BadRequest(new
+            {
+                message =
+                    "Nova senha não informada."
+            });
+        }
 
-    if (string.IsNullOrWhiteSpace(request.Password))
-    {
-        return Results.BadRequest(new
+        if (request.Password.Length < 6)
         {
-            message = "Nova senha não informada."
-        });
-    }
+            return Results.BadRequest(new
+            {
+                message =
+                    "A nova senha deve ter pelo menos 6 caracteres."
+            });
+        }
 
-    if (request.Password.Length < 6)
-    {
-        return Results.BadRequest(new
+        // ----------------------------------------------------
+        // Configurações do PlayFab
+        // ----------------------------------------------------
+
+        string? titleId =
+            configuration["PLAYFAB_TITLE_ID"];
+
+        string? secretKey =
+            configuration["PLAYFAB_SECRET_KEY"];
+
+        if (string.IsNullOrWhiteSpace(titleId))
         {
-            message = "A senha deve ter pelo menos 6 caracteres."
-        });
-    }
+            return Results.Problem(
+                "PLAYFAB_TITLE_ID não configurado."
+            );
+        }
 
-    string? titleId =
-        configuration["PLAYFAB_TITLE_ID"];
+        if (string.IsNullOrWhiteSpace(secretKey))
+        {
+            return Results.Problem(
+                "PLAYFAB_SECRET_KEY não configurado."
+            );
+        }
 
-    string? secretKey =
-        configuration["PLAYFAB_SECRET_KEY"];
+        // ----------------------------------------------------
+        // URL do PlayFab
+        // ----------------------------------------------------
 
-    if (string.IsNullOrWhiteSpace(titleId) ||
-        string.IsNullOrWhiteSpace(secretKey))
-    {
-        return Results.Problem(
-            "Configuração do PlayFab não encontrada no servidor."
-        );
-    }
+        string playFabUrl =
+            $"https://{titleId}.playfabapi.com/Admin/ResetPassword";
 
-    var playFabUrl =
-        $"https://{titleId}.playfabapi.com/Admin/ResetPassword";
+        // ----------------------------------------------------
+        // Corpo enviado ao PlayFab
+        // ----------------------------------------------------
 
-    var playFabRequest = new
-    {
-        Token = request.Token,
-        Password = request.Password
-    };
+        var playFabRequest = new
+        {
+            Token = request.Token,
+            Password = request.Password
+        };
 
-    string json =
-        JsonSerializer.Serialize(playFabRequest);
+        string json =
+            JsonSerializer.Serialize(
+                playFabRequest
+            );
 
-    using var httpRequest =
-        new HttpRequestMessage(
-            HttpMethod.Post,
-            playFabUrl
-        );
+        // ----------------------------------------------------
+        // Request HTTP
+        // ----------------------------------------------------
 
-    httpRequest.Headers.Add(
-        "X-SecretKey",
-        secretKey
-    );
+        using var httpRequest =
+            new HttpRequestMessage(
+                HttpMethod.Post,
+                playFabUrl
+            );
 
-    httpRequest.Content =
-        new StringContent(
-            json,
-            Encoding.UTF8,
-            "application/json"
+        // IMPORTANTE:
+        // A Secret Key fica SOMENTE no servidor.
+        httpRequest.Headers.Add(
+            "X-SecretKey",
+            secretKey
         );
 
-    var client =
-        httpClientFactory.CreateClient();
+        httpRequest.Content =
+            new StringContent(
+                json,
+                Encoding.UTF8,
+                "application/json"
+            );
 
-    using HttpResponseMessage response =
-        await client.SendAsync(httpRequest);
+        // ----------------------------------------------------
+        // Envia para o PlayFab
+        // ----------------------------------------------------
 
-    string responseBody =
-        await response.Content.ReadAsStringAsync();
+        var client =
+            httpClientFactory.CreateClient();
 
-    if (response.IsSuccessStatusCode)
-    {
-        return Results.Ok(new
+        using HttpResponseMessage response =
+            await client.SendAsync(
+                httpRequest
+            );
+
+        string responseBody =
+            await response.Content.ReadAsStringAsync();
+
+        // ----------------------------------------------------
+        // SUCESSO
+        // ----------------------------------------------------
+
+        if (response.IsSuccessStatusCode)
         {
-            message = "Senha redefinida com sucesso."
-        });
-    }
+            Console.WriteLine(
+                "[PlayFab] Senha redefinida com sucesso."
+            );
 
-    return Results.Json(
-        new
-        {
-            message =
-                "Não foi possível redefinir a senha.",
+            return Results.Ok(new
+            {
+                message =
+                    "Senha redefinida com sucesso."
+            });
+        }
 
-            playFabResponse =
-                responseBody
-        },
-        statusCode: (int)response.StatusCode
-    );
-});
+        // ----------------------------------------------------
+        // ERRO
+        // ----------------------------------------------------
+
+        Console.WriteLine(
+            "[PlayFab] Erro ao redefinir senha."
+        );
+
+        Console.WriteLine(
+            responseBody
+        );
+
+        return Results.Json(
+            new
+            {
+                message =
+                    "Não foi possível redefinir a senha.",
+
+                playFabResponse =
+                    responseBody
+            },
+            statusCode:
+                (int)response.StatusCode
+        );
+    });
 
 app.Run();
 
-// =====================================================
-// MODELOS
-// =====================================================
+// ============================================================
+// REQUEST
+// ============================================================
 
 public record ResetPasswordRequest(
     string Token,
