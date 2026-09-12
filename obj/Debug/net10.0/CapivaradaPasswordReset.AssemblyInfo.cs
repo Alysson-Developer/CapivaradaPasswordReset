@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CapivaradaPasswordReset")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+37f8edcba919a54105871e25b46695d78e9b0784")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+39c88987d71826461f5a70744554d864f14459ec")]
 [assembly: System.Reflection.AssemblyProductAttribute("CapivaradaPasswordReset")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CapivaradaPasswordReset")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
