@@ -296,7 +296,7 @@ static string CreateSuccessPage()
             content="no-referrer"
         >
 
-        <title>Senha alterada — Capivarada!</title>
+        <title>Senha alterada — Capivarada</title>
 
         <style>
 
@@ -388,7 +388,7 @@ static string CreateSuccessPage()
         <main class="card">
 
             <div class="logo">
-                🦫 CAPIVARADA!
+                CAPIVARADA
             </div>
 
             <div class="icon">
@@ -405,7 +405,7 @@ static string CreateSuccessPage()
 
             <p style="margin-top: 12px;">
                 Agora você pode voltar para o
-                <strong>Capivarada!</strong>
+                <strong>Capivarada</strong>
                 e fazer login normalmente.
             </p>
 
@@ -449,7 +449,7 @@ static string CreateErrorPage(
             content="no-referrer"
         >
 
-        <title>Erro — Capivarada!</title>
+        <title>Erro — Capivarada</title>
 
         <style>
 
@@ -541,7 +541,7 @@ static string CreateErrorPage(
         <main class="card">
 
             <div class="logo">
-                🦫 CAPIVARADA!
+                CAPIVARADA
             </div>
 
             <div class="icon">
